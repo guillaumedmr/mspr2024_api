@@ -1,39 +1,34 @@
-from flask import Flask, jsonify, request, send_file
-from sqlalchemy.exc import SQLAlchemyError
-import base64
-
+# program.py
+from flask import Flask
+from flask_cors import CORS
 from config import Config
-from models import db, Image
+from extensions import db, jwt
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db.init_app(app)
+def create_app():
+    app = Flask(__name__)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-@app.route('/upload_image/<image_name>', methods=['GET'])
-def upload_image(image_name):
-    image_path = f'images/{image_name}'
-    
-    try:
-        with open(image_path, 'rb') as f:
-            image_content = f.read()
+    app.config.from_object(Config)
 
-        new_image = Image(img_blob=image_content)
-        db.session.add(new_image)
-        db.session.commit()
-        return jsonify(message="L'image a bien été uploadée !")
-    except FileNotFoundError:
-        return jsonify(error='Image not found'), 404
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify(error=f"Erreur de base de données : {str(e)}"), 500
-    except Exception as e:
-        return jsonify(error=f"Une erreur inattendue s'est produite : {str(e)}"), 500
-    
-@app.route('/get_all_images', methods=['GET'])
-def get_all_images():
-    images = Image.query.all()
-    image_list = [{'id': image.id, 'name': base64.b64encode(image.img_blob).decode('utf-8')} for image in images]
-    return jsonify(images=image_list)
+    app.config['SQLALCHEMY_BINDS'] = {
+        'staging': Config.SQLALCHEMY_DATABASE_URI_STAGING,
+        'datawarehouse': Config.SQLALCHEMY_DATABASE_URI_DATAWAREHOUSE,
+    }
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['JWT_SECRET_KEY'] = Config.JWT_SECRET_KEY
+
+    db.init_app(app)
+    jwt.init_app(app)
+
+    # Importation et enregistrement des blueprints ici, après l'initialisation de db et jwt
+    from routes.auth_route import auth_app
+    from routes.image_route import image_app
+
+    app.register_blueprint(auth_app, url_prefix='/auth')
+    app.register_blueprint(image_app, url_prefix='/images')
+
+    return app
 
 if __name__ == '__main__':
+    app = create_app()
     app.run(debug=True)

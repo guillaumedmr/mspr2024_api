@@ -1,0 +1,5 @@
+Lancer le service ngrok :
+ngrok http 5000
+
+Lancer le serveur React avec le tunnel :
+npx expo start --tunnel

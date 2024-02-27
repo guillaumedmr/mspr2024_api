@@ -1,4 +1,13 @@
-CREATE TABLE Image (
+CREATE TABLE Images (
     id INT AUTO_INCREMENT PRIMARY KEY,
     image_blob VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Utilisateurs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    prenom VARCHAR(255) NOT NULL,
+    nom VARCHAR(255) NOT NULL,
+    dateNaissance DATE NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    mot_de_passe VARCHAR(255) NOT NULL
 );
