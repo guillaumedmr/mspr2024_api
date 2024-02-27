@@ -1,29 +1,34 @@
+# program.py
 from flask import Flask
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager   
-
-from routes.image_route import app as image_app
-from routes.auth_route import app as auth_app
 from config import Config
-from models import db
+from extensions import db, jwt
 
-from dotenv import load_dotenv
-import os
+def create_app():
+    app = Flask(__name__)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-load_dotenv()
+    app.config.from_object(Config)
 
-app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "https://4010-37-174-251-7.ngrok-free.app"}})
-app.config.from_object(Config)
+    app.config['SQLALCHEMY_BINDS'] = {
+        'staging': Config.SQLALCHEMY_DATABASE_URI_STAGING,
+        'datawarehouse': Config.SQLALCHEMY_DATABASE_URI_DATAWAREHOUSE,
+    }
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['JWT_SECRET_KEY'] = Config.JWT_SECRET_KEY
 
-app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
+    db.init_app(app)
+    jwt.init_app(app)
 
-db.init_app(app)
+    # Importation et enregistrement des blueprints ici, après l'initialisation de db et jwt
+    from routes.auth_route import auth_app
+    from routes.image_route import image_app
 
-jwt = JWTManager(app)
+    app.register_blueprint(auth_app, url_prefix='/auth')
+    app.register_blueprint(image_app, url_prefix='/images')
 
-app.register_blueprint(auth_app, url_prefix='/auth')
-app.register_blueprint(image_app, url_prefix='/images')
+    return app
 
 if __name__ == '__main__':
+    app = create_app()
     app.run(debug=True)

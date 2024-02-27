@@ -1,17 +1,19 @@
 from flask import Blueprint, jsonify, request
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token, JWTManager
+from flask_jwt_extended import create_access_token
 from sqlalchemy.exc import IntegrityError
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 from config import Config
-from models import db, Utilisateurs
+from ModelDatawarehouse import Utilisateurs
+from extensions import db, jwt
 
-app = Blueprint('auth_routes', __name__)
+auth_app = Blueprint('auth_routes', __name__)  
 
 bcrypt = Bcrypt()
-jwt = JWTManager()
 
-@app.route('/signup', methods=['POST'])
+@auth_app.route('/signup', methods=['POST'])
 def signup():
     try:
         data = request.get_json()
@@ -48,14 +50,14 @@ def signup():
     except Exception as e:
         return jsonify(error=f"Une erreur s'est produite : {str(e)}"), 500
     
-@app.route('/login', methods=['POST'])
+@auth_app.route('/login', methods=['POST'])
 def login():
     try:
         data = request.get_json()
-
         email = data.get('email')
         mot_de_passe = data.get('mot_de_passe')
 
+        # Supposons que Utilisateurs utilise déjà 'datawarehouse' comme bind par défaut.
         user = Utilisateurs.query.filter_by(email=email).first()
 
         if user and bcrypt.check_password_hash(user.mot_de_passe, mot_de_passe):
@@ -63,6 +65,6 @@ def login():
             return jsonify(access_token=access_token), 200
         else:
             return jsonify(message='Email ou mot de passe incorrect'), 401
-
     except Exception as e:
         return jsonify(error=f"Une erreur s'est produite : {str(e)}"), 500
+
