@@ -1,13 +1,14 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, make_response
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token
 from sqlalchemy.exc import IntegrityError
-import logging
-logging.basicConfig(level=logging.DEBUG)
+from flask import session
+from datetime import datetime
 
 from config import Config
-from ModelDatawarehouse import Utilisateurs
+from models.ModelDatawarehouse import Utilisateurs
 from extensions import db, jwt
+from routes.middleware import verify_token
 
 auth_app = Blueprint('auth_routes', __name__)  
 
@@ -50,6 +51,7 @@ def signup():
     except Exception as e:
         return jsonify(error=f"Une erreur s'est produite : {str(e)}"), 500
     
+
 @auth_app.route('/login', methods=['POST'])
 def login():
     try:
@@ -62,9 +64,16 @@ def login():
 
         if user and bcrypt.check_password_hash(user.mot_de_passe, mot_de_passe):
             access_token = create_access_token(identity=user.id)
-            return jsonify(access_token=access_token), 200
+            
+            # Créer une réponse avec le message approprié et le token JWT dans le corps de la réponse
+            response_body = jsonify(message='Connecté avec succès', access_token=access_token)
+            response = make_response(response_body, 200)
+            
+            # Définir le cookie contenant le token
+            response.set_cookie('access_token', access_token, httponly=True)  # httponly=True pour une meilleure sécurité
+            
+            return response
         else:
             return jsonify(message='Email ou mot de passe incorrect'), 401
     except Exception as e:
         return jsonify(error=f"Une erreur s'est produite : {str(e)}"), 500
-
