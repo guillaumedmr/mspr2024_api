@@ -13,7 +13,7 @@ CREATE TABLE utilisateurs (
 
 CREATE TABLE animal (
     id_animal INT AUTO_INCREMENT NOT NULL,
-    img_animal LONGBLOB NOT NULL,
+    img_animal LONGBLOB NULL,
     statut_animal VARCHAR(255) NOT NULL,
     nom_animal VARCHAR(255) NOT NULL,
     nom_latin_animal VARCHAR(255) NOT NULL,
@@ -27,11 +27,11 @@ CREATE TABLE animal (
 
 CREATE TABLE empreinte (
     id_empreinte INT AUTO_INCREMENT NOT NULL,
-    coordonnee_empreinte VARCHAR(255) NOT NULL,
+    coordonnee_empreinte VARCHAR(255) NULL,
     img_empreinte LONGBLOB NOT NULL,
-    date_empreinte DATETIME NOT NULL,
-    id_animal INT NOT NULL,
-    id_utilisateur INT NOT NULL,
+    date_empreinte DATETIME NULL,
+    id_animal INT NULL,
+    id_utilisateur INT NULL,
     CONSTRAINT empreinte_PK PRIMARY KEY (id_empreinte),
     CONSTRAINT empreinte_animal_FK FOREIGN KEY (id_animal) REFERENCES animal(id_animal),
     CONSTRAINT empreinte_utilisateur0_FK FOREIGN KEY (id_utilisateur) REFERENCES utilisateurs(id)
