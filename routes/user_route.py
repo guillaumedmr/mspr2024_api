@@ -96,7 +96,7 @@ def get_feed():
                 # Conversion de l'image en base64
                 img_base64 = base64.b64encode(empreinte.img_empreinte).decode('utf-8') if empreinte.img_empreinte else None
                 historique.append({
-                    # 'base64': img_base64,
+                    'base64': img_base64,
                     'date_empreinte': empreinte.date_empreinte.strftime("%d-%m-%Y %H:%M:%S"),
                     'nom_animal': animaux.get(empreinte.id_animal, {}).get('nom'),
                     'coordonnee_empreinte': nom_ville,
